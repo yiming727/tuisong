@@ -1,0 +1,31 @@
+name: Daily Backend Knowledge Push
+
+on:
+  schedule:
+    # 每天 07:00 北京时间（UTC+8）= 前一天 23:00 UTC
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-backend-push
+  cancel-in-progress: false
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Push today's knowledge to WeChat
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: python scripts/daily_push.py

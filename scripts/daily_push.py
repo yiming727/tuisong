@@ -77,6 +77,8 @@ def send_to_wechat(token: str, title: str, content: str) -> dict:
             "title": title,
             "content": content,
             "template": "markdown",
+            # 强制走微信服务号渠道，以公众号消息形式出现在微信聊天列表
+            "channel": "wechat",
         }
     ).encode("utf-8")
     req = urllib.request.Request(PUSHPLUS_URL, data=payload, method="POST")

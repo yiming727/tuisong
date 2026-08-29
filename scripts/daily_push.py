@@ -68,7 +68,7 @@ def render(entry: dict, now: datetime, day_index: int) -> tuple[str, str]:
         lines.append(entry["tip"])
         lines.append("")
     lines.append("---")
-    lines.append("坚持每天 10 分钟，跳槽加油 💪")
+    lines.append("每天 10 分钟，坚持就是胜利 💪")
     return title, "\n".join(lines)
 
 

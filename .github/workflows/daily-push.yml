@@ -2,8 +2,8 @@ name: Daily Backend Knowledge Push
 
 on:
   schedule:
-    # 每天 07:00 北京时间（UTC+8）= 前一天 23:00 UTC
-    - cron: "0 23 * * *"
+    # 每天 08:00 北京时间（UTC+8）= 00:00 UTC
+    - cron: "0 0 * * *"
   workflow_dispatch:
     inputs:
       test_mode:

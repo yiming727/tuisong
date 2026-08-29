@@ -108,6 +108,12 @@ def main() -> int:
     entry = pick_entry(entries, day_index)
     title, content = render(entry, now, day_index)
 
+    test_mode = os.environ.get("TEST_MODE", "").strip().lower() in ("1", "true", "yes", "on")
+    if test_mode:
+        stamp = now.strftime("%Y-%m-%d %H:%M:%S")
+        title = f"{title}（测试 {stamp}）"
+        content = f"{content}\n\n---\n（测试消息 {stamp}，可安全重复发送）"
+
     print(f"今日选题（内容库共 {len(entries)} 条）：{entry['category']} - {entry['title']}")
 
     if args.preview:

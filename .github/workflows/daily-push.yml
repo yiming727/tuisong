@@ -4,7 +4,12 @@ on:
   schedule:
     # 每天 07:00 北京时间（UTC+8）= 前一天 23:00 UTC
     - cron: "0 23 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: "测试模式：追加时间戳，避免重复内容被 PushPlus 拦截"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -28,4 +33,5 @@ jobs:
       - name: Push today's knowledge to WeChat
         env:
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+          TEST_MODE: ${{ inputs.test_mode }}
         run: python scripts/daily_push.py

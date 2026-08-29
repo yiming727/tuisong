@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-# 每日后端知识 -> 微信推送（PushPlus）
+# 每日后端知识 -> 邮箱推送（PushPlus）
 # 每天 07:00 由 GitHub Actions 调度执行：按日期轮换选题，
-# 生成 Markdown 后调用 PushPlus 接口推送到微信。
+# 生成 Markdown 后调用 PushPlus 接口推送到邮箱。
 #
 # 本地预览：python scripts/daily_push.py --print
 
 import argparse
+import html as html_module
 import json
 import os
 import pathlib
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -70,15 +72,61 @@ def render(entry: dict, now: datetime, day_index: int) -> tuple[str, str]:
     return title, "\n".join(lines)
 
 
-def send_to_wechat(token: str, title: str, content: str) -> dict:
+def inline_md(text: str) -> str:
+    """把行内 Markdown（**加粗**）转成 HTML。"""
+    escaped = html_module.escape(text)
+    return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+
+
+def md_to_html(md: str) -> str:
+    """把脚本生成的 Markdown 子集转成简单 HTML，用于邮件展示。"""
+    lines = md.replace("\r\n", "\n").split("\n")
+    out: list[str] = []
+    in_list = False
+
+    def close_list() -> None:
+        nonlocal in_list
+        if in_list:
+            out.append("</ul>")
+            in_list = False
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            close_list()
+            continue
+        if stripped == "---":
+            close_list()
+            out.append("<hr>")
+            continue
+        if stripped.startswith("# "):
+            out.append(f"<h1>{html_module.escape(stripped[2:])}</h1>")
+        elif stripped.startswith("## "):
+            out.append(f"<h2>{html_module.escape(stripped[3:])}</h2>")
+        elif stripped.startswith("> "):
+            out.append(f"<blockquote>{inline_md(stripped[2:])}</blockquote>")
+        elif stripped.startswith("- "):
+            if not in_list:
+                out.append("<ul>")
+                in_list = True
+            out.append(f"<li>{inline_md(stripped[2:])}</li>")
+        elif re.fullmatch(r"\*\*.+\*\*", stripped):
+            out.append(f"<p><strong>{html_module.escape(stripped[2:-2])}</strong></p>")
+        else:
+            out.append(f"<p>{inline_md(stripped)}</p>")
+    close_list()
+    return "\n".join(out)
+
+
+def send_email(token: str, title: str, content: str) -> dict:
     payload = urllib.parse.urlencode(
         {
             "token": token,
             "title": title,
-            "content": content,
-            "template": "markdown",
-            # 强制走微信服务号渠道，以公众号消息形式出现在微信聊天列表
-            "channel": "wechat",
+            "content": md_to_html(content),
+            "template": "html",
+            # 邮件渠道：推送到 PushPlus 个人中心里绑定并验证过的接收邮箱
+            "channel": "mail",
         }
     ).encode("utf-8")
     req = urllib.request.Request(PUSHPLUS_URL, data=payload, method="POST")
@@ -120,7 +168,7 @@ def main() -> int:
         return 1
 
     try:
-        result = send_to_wechat(token, title, content)
+        result = send_email(token, title, content)
     except Exception as exc:
         print(f"推送失败：{exc}", file=sys.stderr)
         return 1

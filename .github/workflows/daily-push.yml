@@ -2,8 +2,9 @@ name: Daily Backend Knowledge Push
 
 on:
   schedule:
-    # 每天 06:02 北京时间（UTC+8）= 前一天 22:02 UTC
-    - cron: "2 22 * * *"
+    # 每天 01:02 北京时间（UTC+8）= 前一天 17:02 UTC
+    # 提前发出，即使 GitHub 排队延迟几小时也能保证 8 点前收到
+    - cron: "2 17 * * *"
     # 每天 18:02 北京时间（UTC+8）= 10:02 UTC
     # 避开整点高峰：GitHub 定时任务在整点前后负载高时会被排队延迟
     - cron: "2 10 * * *"

@@ -72,6 +72,27 @@ Value: 第 1 步复制的 token
 - 想改时间：编辑 `.github/workflows/daily-push.yml` 里的 cron（UTC 时间，北京时间 = UTC + 8）。
 - 想暂停：在 GitHub Actions 页面把工作流禁用即可。
 
+## 更稳定的方案：腾讯云函数（推荐）
+
+GitHub 自带的定时调度在整点前后容易排队延迟甚至漏触发。如果想要稳定准点，
+推荐改用腾讯云函数定时触发，完全绕开 GitHub 调度：
+
+1. 登录腾讯云控制台，搜索「云函数」，新建「事件函数」（运行时选 Python 3.9 及以上）。
+2. 函数名随意（如 `daily-knowledge-push`），执行方法保持默认 `index.main_handler`。
+3. 把 [`cloud/tencent_scf/index.py`](cloud/tencent_scf/index.py) 和
+   [`cloud/tencent_scf/knowledge_bank.json`](cloud/tencent_scf/knowledge_bank.json)
+   一起上传（可把这两个文件打成 zip 后上传，或在线编辑器分别创建/上传）。
+4. 在「函数配置 → 环境变量」添加：`PUSHPLUS_TOKEN` = 你的 PushPlus token。
+5. 创建两个定时触发器（北京时间）：
+   - 每天 06:02：cron `0 2 6 * * * *`
+   - 每天 18:02：cron `0 2 18 * * * *`
+6. 点击「测试」运行一次，邮箱应能收到邮件。
+7. 启用云函数后，请到 GitHub Actions 页面把 `Daily Backend Knowledge Push`
+   工作流**禁用**，避免两边重复发送。
+
+以后扩充知识库：更新 `content/knowledge_bank.json` 后，同步替换
+`cloud/tencent_scf/knowledge_bank.json` 并重新上传函数即可。
+
 ## 本地预览（可选）
 
 ```bash

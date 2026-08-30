@@ -1,0 +1,441 @@
+{
+  "meta": {
+    "name": "互联网后端面试每日知识库",
+    "description": "每天一个主题 + 2-3 道高频面试题，10 分钟读完",
+    "rotation": "按日期轮换"
+  },
+  "entries": [
+    {
+      "id": 1,
+      "category": "Java核心",
+      "title": "HashMap 底层原理与扩容",
+      "summary": "数组 + 链表 + 红黑树，面试必考，重点掌握 hash 定位、树化条件、扩容与线程安全。",
+      "core": [
+        "结构：JDK1.8 采用数组 + 链表 + 红黑树；默认容量 16、负载因子 0.75，扩容阈值 = 容量 × 负载因子。",
+        "定位：key 的 hashCode 高 16 位与低 16 位异或（扰动函数）降低碰撞，再与 (n-1) 做位与运算代替取模。",
+        "树化：链表长度 ≥ 8 且数组长度 ≥ 64 时转红黑树；长度降到 6 时退化为链表，避免频繁转换。",
+        "扩容：容量翻倍后元素重新分布；1.7 头插法多线程扩容可能形成环，1.8 改尾插法避免死循环，但并发下仍会丢数据。",
+        "并发安全：使用 ConcurrentHashMap；1.8 实现为 CAS + synchronized 锁桶头，1.7 的分段锁已废弃。"
+      ],
+      "qa": [
+        {
+          "q": "HashMap 1.7 和 1.8 有哪些区别？",
+          "a": "数据结构（1.8 引入红黑树）；插入方式（头插改尾插）；扩容重哈希（1.8 根据高位判断元素留在原位或迁移到 原位置+oldCap）；并发下 1.7 可能死循环，1.8 不再死循环但会丢数据。"
+        },
+        {
+          "q": "为什么链表转红黑树的阈值是 8？",
+          "a": "负载因子 0.75 时，链长达到 8 的概率约千万分之六（泊松分布），属于极端情况；红黑树节点占用空间更大，过早树化浪费内存，8 是查询性能与空间成本的折中。"
+        }
+      ],
+      "tip": "追问点：为什么用红黑树而不用平衡二叉树或跳表？为什么容量是 2 的幂？"
+    },
+    {
+      "id": 2,
+      "category": "JVM",
+      "title": "内存区域与对象创建",
+      "summary": "运行时数据区划分、对象创建流程，是 JVM 面试的第一道送分题。",
+      "core": [
+        "线程私有：程序计数器、虚拟机栈、本地方法栈；线程共享：堆、方法区（JDK8 起为元空间）。",
+        "虚拟机栈：每个方法调用对应一个栈帧，含局部变量表、操作数栈、动态链接、返回地址；栈溢出对应 StackOverflowError。",
+        "堆：新生代（Eden + 两个 Survivor）+ 老年代；对象优先在 Eden 分配，Minor GC 后经 Survivor 复制，年龄到 15 进入老年代。",
+        "方法区存类元信息、常量、静态变量；JDK8 用元空间（本地内存）替代永久代，避免固定上限导致的 OOM。",
+        "对象创建流程：类加载检查 → 分配内存（指针碰撞或空闲列表）→ 内存清零 → 设置对象头 → 执行构造方法。"
+      ],
+      "qa": [
+        {
+          "q": "堆和栈的区别？",
+          "a": "栈存方法调用与局部变量，线程私有、自动释放、容量小速度快；堆存对象实例，线程共享、由 GC 管理、容量大但有分配和回收开销。"
+        },
+        {
+          "q": "为什么 JDK8 用元空间替代永久代？",
+          "a": "永久代大小固定，容易出现 OOM，且与 JIT、类加载器耦合；元空间使用本地内存，默认可动态扩展，字符串常量池与类元信息更易回收。"
+        }
+      ],
+      "tip": "常被追问：对象一定分配在堆上吗？（JIT 逃逸分析可能分配到栈上）"
+    },
+    {
+      "id": 3,
+      "category": "Java核心",
+      "title": "synchronized 与 volatile",
+      "summary": "并发三特性：原子性、可见性、有序性，以及锁升级过程。",
+      "core": [
+        "volatile 保证可见性与有序性（禁止指令重排），但不保证原子性，适合状态标志位场景。",
+        "synchronized 保证互斥（原子性）+ 可见性 + 有序性，进入和退出监视器时会刷新工作内存。",
+        "JMM 规定线程操作共享变量先在各自工作内存拷贝；volatile 修饰的变量直接读写主内存。",
+        "锁升级：无锁 → 偏向锁 → 轻量级锁（自旋）→ 重量级锁（OS 互斥量）；JDK6 后默认开启，性能大幅提升。",
+        "双重检查锁单例必须加 volatile：防止 new 对象的指令重排导致拿到未完成初始化的实例。"
+      ],
+      "qa": [
+        {
+          "q": "volatile 能保证原子性吗？",
+          "a": "不能。i++ 这类读改写操作仍需 synchronized 或 Atomic 类（CAS）保证原子性，volatile 只解决可见性与重排序。"
+        },
+        {
+          "q": "synchronized 和 Lock 有什么区别？",
+          "a": "Lock 更灵活：可超时获取、可中断、支持公平锁与读写分离；synchronized 由 JVM 自动释放、语法简单。现代 JVM 下两者性能差距不大，优先用 synchronized。"
+        }
+      ],
+      "tip": "追问点：happens-before 原则；CAS 的 ABA 问题如何解决（AtomicStampedReference）。"
+    },
+    {
+      "id": 4,
+      "category": "JVM",
+      "title": "GC 算法与垃圾收集器",
+      "summary": "可达性分析、三种回收算法，以及 CMS / G1 / ZGC 的选择。",
+      "core": [
+        "判定垃圾：可达性分析，GC Roots 包括栈上引用、静态变量、常量引用、JNI 引用；引用计数法无法解决循环引用。",
+        "回收算法：标记-清除（产生碎片）、复制（新生代，Eden 和 Survivor 8:1:1）、标记-整理（老年代）。",
+        "CMS：以最短停顿为目标，并发标记清除，缺点碎片化、产生浮动垃圾、无法处理并发失败。",
+        "G1：Region 分区 + 可预测停顿时间，JDK9 起默认；通过 Mixed GC 回收老年代，结合 Remembered Set 减少扫描。",
+        "ZGC：着色指针 + 读屏障，停顿毫秒级且与堆大小无关，适合大堆与低延迟场景。"
+      ],
+      "qa": [
+        {
+          "q": "怎么排查频繁 Full GC？",
+          "a": "先看监控：GC 日志、堆与老年代使用率、Full GC 频率；再 dump 堆分析大对象、集合静态持有、连接未关闭等内存泄漏点，结合 -XX:+HeapDumpOnOutOfMemoryError 定位。"
+        },
+        {
+          "q": "三色标记法是什么？",
+          "a": "把对象标记为白（未访问）、灰（自身已标记、引用未处理完）、黑（引用已处理完）三色，解决并发标记时对象漏标的问题，配合写屏障处理增量更新或快照。"
+        }
+      ],
+      "tip": "追问：G1 的 Mixed GC 回收哪些 Region？什么情况会退化成 Full GC？"
+    },
+    {
+      "id": 5,
+      "category": "Java核心",
+      "title": "线程池：参数与执行流程",
+      "summary": "七个参数、四步执行流程、四种拒绝策略，以及为什么别用 Executors。",
+      "core": [
+        "七个参数：corePoolSize、maximumPoolSize、keepAliveTime、unit、workQueue、threadFactory、handler。",
+        "执行流程：核心线程 → 任务队列 → 非核心线程 → 拒绝策略；先入队后建非核心线程是常见考点。",
+        "拒绝策略：AbortPolicy（抛异常）、CallerRunsPolicy（调用者线程执行）、DiscardPolicy、DiscardOldestPolicy。",
+        "不建议 Executors：newFixedThreadPool 用无界队列会堆积任务导致 OOM；newCachedThreadPool 最大线程数为 Integer.MAX_VALUE 会创建过多线程。",
+        "线程数估算：CPU 密集 ≈ CPU 核数 + 1；IO 密集 ≈ CPU 核数 × 2，或按 线程数 = 核数 × (1 + 等待时间/计算时间)。"
+      ],
+      "qa": [
+        {
+          "q": "线程池中的线程什么时候被销毁？",
+          "a": "非核心线程空闲超过 keepAliveTime 会被回收；设置 allowCoreThreadTimeOut(true) 后核心线程空闲也会被回收。"
+        },
+        {
+          "q": "execute 和 submit 有什么区别？",
+          "a": "execute 提交 Runnable，无返回值，异常直接抛出；submit 可提交 Callable，返回 Future，异常包装在 Future.get() 中抛出，适合需要结果或统一异常处理的场景。"
+        }
+      ],
+      "tip": "追问：如何动态调整线程池核心线程数？线程池的拒绝策略在真实业务里一般怎么选？"
+    },
+    {
+      "id": 6,
+      "category": "Spring",
+      "title": "Bean 生命周期与循环依赖",
+      "summary": "从实例化到销毁的完整流程，以及三级缓存如何解决循环依赖。",
+      "core": [
+        "生命周期：实例化 → 属性填充 → Aware 回调 → BeanPostProcessor 前置 → 初始化（InitializingBean / init-method）→ BPP 后置 → 使用 → 销毁。",
+        "三级缓存：一级 singletonObjects（成品）、二级 earlySingletonObjects（早期暴露）、三级 singletonFactories（存放生成代理的工厂）。",
+        "循环依赖：A 依赖 B、B 依赖 A 时，A 实例化后先放入三级缓存，B 填充属性时拿到 A 的早期引用，A 完成初始化后升级为成品。",
+        "为什么是三级而非二级：需要区分普通 Bean 与 AOP 代理 Bean，代理对象在 BeanPostProcessor 阶段才生成，三级缓存用工厂延迟创建代理。",
+        "构造器注入的循环依赖无法解决（BeanCurrentlyInCreationException）；prototype 作用域 Bean 也不在缓存中，无法解决。"
+      ],
+      "qa": [
+        {
+          "q": "Spring 怎么处理构造器循环依赖？",
+          "a": "无法解决，会抛出 BeanCurrentlyInCreationException；常见解法是用 @Lazy 延迟注入、改为 setter/字段注入，或重构依赖关系消除环。"
+        },
+        {
+          "q": "为什么二级缓存不够，一定要三级？",
+          "a": "如果提前暴露的是最终成品对象，AOP 代理无法在正确的时机生成；三级缓存保存的是 ObjectFactory，在需要时再决定返回普通 Bean 还是代理，保证代理不会失效。"
+        }
+      ],
+      "tip": "追问：@Autowired 字段注入 vs 构造器注入，为什么 Spring 官方推荐构造器注入。"
+    },
+    {
+      "id": 7,
+      "category": "Spring",
+      "title": "Spring Boot 自动配置原理",
+      "summary": "@SpringBootApplication 的组成与条件装配机制。",
+      "core": [
+        "@SpringBootApplication = @SpringBootConfiguration + @EnableAutoConfiguration + @ComponentScan。",
+        "自动配置入口：@EnableAutoConfiguration 通过 @Import(AutoConfigurationImportSelector) 加载 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports 中声明的配置类。",
+        "条件装配：@ConditionalOnClass、@ConditionalOnMissingBean、@ConditionalOnProperty 等注解按依赖和配置决定是否生效。",
+        "自定义 Starter：写自动配置类 + 条件注解 + resources 下的 imports 文件，命名以 -spring-boot-starter 结尾。",
+        "覆盖默认配置：自己声明的 Bean 会优先（自动配置里用 @ConditionalOnMissingBean 让位）；也可以 exclude 或 spring.autoconfigure.exclude 关闭某个自动配置。"
+      ],
+      "qa": [
+        {
+          "q": "为什么引入一个 starter 就能自动配置好？",
+          "a": "starter 带上了依赖，而自动配置类通过 imports 文件被 AutoConfigurationImportSelector 加载，再结合条件注解按环境按需生效，无需手动写配置类。"
+        },
+        {
+          "q": "如何调整自动配置的顺序？",
+          "a": "用 @AutoConfigureBefore / @AutoConfigureAfter / @AutoConfigureOrder 控制配置类加载顺序，避免 Bean 覆盖或依赖顺序错误。"
+        }
+      ],
+      "tip": "追问：@ConditionalOnMissingBean 与 @ConditionalOnClass 的典型组合，如何看当前生效的自动配置（autoconfigure report）。"
+    },
+    {
+      "id": 8,
+      "category": "Spring",
+      "title": "AOP 原理：JDK 代理与 CGLIB",
+      "summary": "动态代理的两种实现、AOP 通知类型，以及事务失效的常见原因。",
+      "core": [
+        "AOP 术语：切面、切点、通知（Before / AfterReturning / AfterThrowing / After / Around）、连接点、织入。",
+        "默认策略：目标类实现接口时用 JDK 动态代理（基于接口生成 Proxy），未实现接口时用 CGLIB（生成子类字节码）。",
+        "CGLIB 限制：final 类和 final 方法无法代理；JDK 代理要求接口。Spring Boot 2.x 起默认使用 CGLIB 代理。",
+        "调用链：调用代理对象方法 → 按顺序执行增强逻辑 → 最终反射/字节码调用目标方法。",
+        "典型场景：@Transactional 事务、日志、鉴权、接口耗时统计、缓存。"
+      ],
+      "qa": [
+        {
+          "q": "JDK 动态代理和 CGLIB 的区别？",
+          "a": "JDK 基于接口生成代理类，必须有接口，用 InvocationHandler 反射调用；CGLIB 通过继承生成目标类子类，字节码增强，不要求接口，但不能代理 final 类与方法。"
+        },
+        {
+          "q": "为什么 @Transactional 有时候不生效？",
+          "a": "常见原因：同类内部调用 this 调用绕过了代理；异常被 try-catch 吞掉；方法不是 public；类没被 Spring 管理；事务管理器未配置。"
+        }
+      ],
+      "tip": "追问：@Transactional 默认只回滚 RuntimeException，checked 异常默认不回滚，怎么处理？"
+    },
+    {
+      "id": 9,
+      "category": "MySQL",
+      "title": "索引原理：B+ 树与优化",
+      "summary": "聚簇索引、二级索引、最左前缀和索引失效场景。",
+      "core": [
+        "InnoDB 主键索引是聚簇索引，叶子节点存整行数据；二级索引叶子节点存主键值，查询需回表。",
+        "B+ 树 vs B 树：非叶子节点不存数据、叶子节点有序链表相连，范围查询高效、树更矮减少磁盘 IO。",
+        "联合索引最左前缀：索引 (a,b,c) 可命中 a、a,b、a,b,c；跳过中间列只能部分使用索引。",
+        "覆盖索引：查询列全部在索引中，无需回表；这也是为什么建议少用 select *。",
+        "索引失效：隐式类型转换、对列使用函数或运算、like '%xx'、or 连接非索引列、违反最左前缀。"
+      ],
+      "qa": [
+        {
+          "q": "为什么 MySQL 用 B+ 树而不用哈希索引？",
+          "a": "哈希索引只支持等值查询，无法范围查询和排序；B+ 树叶子节点有序，天然支持范围查询、排序和分组，且树高小、磁盘 IO 少。"
+        },
+        {
+          "q": "哪些情况不适合建索引？",
+          "a": "数据量很小的表、频繁更新的列、区分度低的列（如性别）、已有联合索引开头列的冗余索引，建了反而增加写入与存储开销。"
+        }
+      ],
+      "tip": "追问：explain 里 type、key、rows 怎么分析？什么是索引下推（ICP）？"
+    },
+    {
+      "id": 10,
+      "category": "MySQL",
+      "title": "事务隔离级别与 MVCC",
+      "summary": "ACID、四种隔离级别、ReadView 可见性与当前读。",
+      "core": [
+        "隔离级别：读未提交、读已提交、可重复读（InnoDB 默认）、串行化；对应脏读、不可重复读、幻读问题。",
+        "MVCC 实现：每行有隐藏列 trx_id（最近修改事务）、roll_pointer（回滚指针），undo log 形成版本链，ReadView 记录活跃事务列表判断版本可见性。",
+        "RC 每次快照读都生成新 ReadView，RR 只在第一次快照读生成，因此可重复读能解决不可重复读。",
+        "幻读：RR 下普通 select（快照读）不会幻读；当前读（select for update / update）仍需 Next-Key Lock 解决。",
+        "持久性靠 redo log（崩溃恢复），回滚靠 undo log；redo 与 binlog 通过两阶段提交保证主从数据一致。"
+      ],
+      "qa": [
+        {
+          "q": "MVCC 解决幻读了吗？",
+          "a": "快照读不产生幻读；当前读通过间隙锁和临键锁（Next-Key Lock）阻止插入，所以 InnoDB 默认 RR 下基本不会出现幻读。"
+        },
+        {
+          "q": "redo log 和 binlog 有什么区别？",
+          "a": "redo 是 InnoDB 层的物理日志，记录页的修改，用于崩溃恢复，循环写；binlog 是 Server 层的逻辑日志，用于主从复制和时间点恢复，追加写。"
+        }
+      ],
+      "tip": "追问：ReadView 的可见性判断规则；长事务为什么危险（undo log 无法清理、锁不释放）。"
+    },
+    {
+      "id": 11,
+      "category": "MySQL",
+      "title": "锁机制：行锁、间隙锁与死锁",
+      "summary": "InnoDB 锁类型、死锁成因与规避。",
+      "core": [
+        "锁类型：记录锁（行锁）、间隙锁（Gap Lock）、临键锁（Record + Gap，RR 默认）、表锁、意向锁。",
+        "加锁路径：update / delete 命中索引才会锁行；没有走索引会锁大量行甚至锁表。",
+        "死锁四要素：互斥、持有并等待、不可剥夺、循环等待；InnoDB 会检测死锁并回滚代价较小的事务。",
+        "乐观锁：版本号或 CAS，适合读多写少；悲观锁：select ... for update，适合并发写入激烈场景。",
+        "避免死锁：按固定顺序加锁、事务尽量小、确保走索引、减少锁范围、避免长事务。"
+      ],
+      "qa": [
+        {
+          "q": "间隙锁解决什么问题？",
+          "a": "解决 RR 隔离级别下当前读的幻读问题：锁住索引记录之间的间隙，阻止其他事务在间隙中插入数据。"
+        },
+        {
+          "q": "怎么定位死锁？",
+          "a": "执行 show engine innodb status 查看 LATEST DETECTED DEADLOCK 段，分析两个事务的加锁顺序与涉及索引，调整业务加锁顺序。"
+        }
+      ],
+      "tip": "追问：update 不带 where 为什么危险；insert 的插入意向锁是什么。"
+    },
+    {
+      "id": 12,
+      "category": "Redis",
+      "title": "数据结构、过期与持久化",
+      "summary": "五大常用结构、过期淘汰策略、RDB/AOF 与混合持久化。",
+      "core": [
+        "常用结构：String（计数/缓存）、Hash、List（队列/栈）、Set（去重/交并差）、ZSet（排行榜，跳表 + 哈希）。",
+        "底层编码：sds、intset、ziplist/listpack、quicklist、skiplist 等，根据元素数量和大小自动升级，节省内存。",
+        "过期策略：惰性删除 + 定期抽样删除；内存淘汰策略：noeviction、allkeys-lru、volatile-lru、allkeys-lfu 等。",
+        "RDB：定时快照，恢复快体积小，可能丢最后一次快照后的数据；AOF：追加写日志，默认 everysec 刷盘。",
+        "混合持久化：AOF 重写时生成 RDB 前缀再加增量 AOF，兼顾恢复速度与数据完整性。"
+      ],
+      "qa": [
+        {
+          "q": "Redis 为什么这么快？",
+          "a": "纯内存操作；单线程避免锁竞争和上下文切换（6.0 多线程只用于网络 IO）；高效数据结构；IO 多路复用。"
+        },
+        {
+          "q": "RDB 和 AOF 怎么选？",
+          "a": "追求高可靠选 AOF everysec；追求启动恢复速度与低开销选 RDB；生产环境通常开启混合持久化，兼顾两者。"
+        }
+      ],
+      "tip": "追问：bigkey 的危害与拆分方案；热 key 如何打散；单线程为什么还能处理高并发。"
+    },
+    {
+      "id": 13,
+      "category": "Redis",
+      "title": "缓存穿透、击穿与雪崩",
+      "summary": "三大缓存问题的成因与解决方案，面试高频。",
+      "core": [
+        "穿透：查询不存在的数据，缓存没有、每次都打 DB。应对：布隆过滤器、缓存空值（设置短过期时间）。",
+        "击穿：热点 key 过期瞬间，大量请求同时打到 DB。应对：互斥锁重建缓存、逻辑过期、热点 key 不过期。",
+        "雪崩：大量 key 同时过期，或 Redis 实例宕机。应对：过期时间加随机抖动、多级缓存、集群高可用、限流降级。",
+        "一致性：Cache Aside 模式先更新 DB 再删缓存；删缓存失败可用 MQ 重试或延迟双删兜底。",
+        "更彻底的方案：canal 订阅 binlog 异步刷新缓存，业务代码只负责写库。"
+      ],
+      "qa": [
+        {
+          "q": "如何保证缓存和数据库的一致性？",
+          "a": "写路径：先更新 DB 再删除缓存；删除失败通过 MQ 异步重试或 canal 订阅 binlog 刷新；读路径：读不到缓存则回源 DB 并回填。"
+        },
+        {
+          "q": "布隆过滤器有什么缺点？",
+          "a": "存在误判（可能把不存在的 key 判定为存在），且不支持删除元素，数据更新频繁时需要定期重建或使用计数布隆过滤器。"
+        }
+      ],
+      "tip": "追问：缓存击穿时互斥锁重建的伪代码；为什么先删缓存再写库会有脏数据。"
+    },
+    {
+      "id": 14,
+      "category": "Redis",
+      "title": "分布式锁：SETNX 与 Redisson",
+      "summary": "分布式锁的基本要求、Redis 实现、看门狗机制与选型争议。",
+      "core": [
+        "基本要求：互斥、可重入、防死锁（过期时间）、防误删（唯一 value 校验）、高可用。",
+        "Redis 实现：SET key value NX PX 30000；释放时用 Lua 脚本比对 value 再删除，保证原子性。",
+        "Redisson：封装锁 API，提供看门狗自动续期（默认 30 秒，每 1/3 时间续期），支持可重入。",
+        "ZooKeeper 锁：临时顺序节点 + 监听前一节点，无锁超时问题，但性能与运维成本高于 Redis。",
+        "RedLock 争议：多节点加锁依赖时钟，存在时钟漂移风险；很多场景主从锁 + 业务幂等兜底已够用。"
+      ],
+      "qa": [
+        {
+          "q": "SETNX 实现的分布式锁有哪些坑？",
+          "a": "忘记设置过期时间会死锁；过期时间太短任务未完成锁就失效；未校验 value 会误删他人锁；Redis 主从切换可能丢锁。"
+        },
+        {
+          "q": "Redisson 看门狗的原理？",
+          "a": "默认锁过期时间 30 秒，获取锁后后台定时任务每 10 秒（1/3 过期时间）续期，直到业务主动释放，避免任务未完成锁被提前回收。"
+        }
+      ],
+      "tip": "追问：分布式锁和本地锁的区别；拿不到锁的业务一般怎么做降级和幂等兜底。"
+    },
+    {
+      "id": 15,
+      "category": "消息队列",
+      "title": "MQ 选型与消息可靠性",
+      "summary": "主流 MQ 对比、消息不丢失/不重复/不乱序的三座大山。",
+      "core": [
+        "选型：Kafka 高吞吐适合日志与流处理；RocketMQ 事务消息与金融场景；RabbitMQ 协议丰富、延迟队列灵活。",
+        "不丢消息：生产端确认（ack/事务）；Broker 持久化并多副本；消费端业务处理成功后再手动 ack。",
+        "不重复：消费端幂等——唯一业务 ID 去重、Redis setnx、数据库唯一约束。",
+        "不乱序：Kafka 同一分区内有序，按业务 key 路由到同一分区；RocketMQ 用顺序队列；全局严格有序成本高，一般只保证局部有序。",
+        "堆积处理：提升消费并行度、批量拉取、临时扩容消费者，紧急情况先转储再离线补处理。"
+      ],
+      "qa": [
+        {
+          "q": "消息丢失可能发生在哪几个环节？",
+          "a": "生产端（未确认、网络闪断）、Broker（未落盘、主从未同步）、消费端（自动 ack 后处理失败）；每个环节都要做可靠性配置。"
+        },
+        {
+          "q": "如何保证消息只被消费一次？",
+          "a": "精确一次很难，通常靠消费端幂等：利用业务唯一键去重表、Redis setnx、数据库唯一约束，重复投递时幂等跳过。"
+        }
+      ],
+      "tip": "追问：Kafka 为什么吞吐高（顺序写磁盘、页缓存、零拷贝）；消费者组 rebalance 机制。"
+    },
+    {
+      "id": 16,
+      "category": "分布式",
+      "title": "分布式事务：2PC / TCC / 最终一致性",
+      "summary": "强一致与最终一致方案对比，以及什么时候真的需要分布式事务。",
+      "core": [
+        "2PC：准备 + 提交两阶段，协调者单点、参与者同步阻塞、网络分区下可能不一致。",
+        "TCC：Try-Confirm-Cancel 三段式业务补偿，侵入性强，适合账户、库存等强一致场景。",
+        "本地消息表：本地事务同时写业务表和消息表，定时任务投递 MQ，消费端幂等消费。",
+        "可靠消息最终一致性：RocketMQ 事务消息（half message）先发半消息，本地事务成功后再 commit，保证生产端不丢。",
+        "选择原则：能不做就不做——优先本地事务 + MQ + 异步补偿；强一致选 Seata（AT 模式）、TCC；最终一致选本地消息表/事务消息。"
+      ],
+      "qa": [
+        {
+          "q": "2PC 有什么缺点？",
+          "a": "协调者单点故障会阻塞全部参与者；准备阶段后参与者持有锁资源等待，性能差；网络分区或协调者崩溃时可能出现数据不一致。"
+        },
+        {
+          "q": "Seata AT 模式原理？",
+          "a": "代理数据源，在执行业务 SQL 前后记录前后镜像到 undo log，事务提交时删除镜像，回滚时反向补偿，对业务代码侵入小。"
+        }
+      ],
+      "tip": "追问：下单场景怎么用 MQ 最终一致性实现，为什么不直接开一个大事务。"
+    },
+    {
+      "id": 17,
+      "category": "系统设计",
+      "title": "秒杀系统设计",
+      "summary": "高并发写场景：削峰、限流、防超卖、异步下单的完整链路。",
+      "core": [
+        "整体思路：请求分层削峰——前端限流/验证码 → 网关限流 → 应用层令牌桶 → MQ 削峰 → DB 兜底。",
+        "防超卖：DB 层 update stock = stock - 1 where stock > 0；Redis 层用 Lua 脚本 decrby 原子扣减。",
+        "库存预扣：秒杀开始前把库存预热到 Redis，Redis 扣减成功后再异步落库，最终以 DB 唯一约束兜底。",
+        "静态化与 CDN：商品详情静态化，动态流量只打秒杀接口，降低应用压力。",
+        "异步下单：请求进 MQ 立即返回排队中，消费者异步创建订单，削峰填谷。"
+      ],
+      "qa": [
+        {
+          "q": "怎么防止超卖？",
+          "a": "三层防护：Redis Lua 原子扣减库存；DB 条件更新（where stock > 0）加乐观锁；订单表对用户+场次加唯一约束，扣减失败回滚。"
+        },
+        {
+          "q": "如何限流？",
+          "a": "令牌桶（Guava/Bucket4j）、滑动窗口、Redis 计数器 + Lua；按用户/IP/接口维度设置阈值，超限直接拒绝并返回排队提示。"
+        }
+      ],
+      "tip": "追问：同一用户同一场次如何保证只下一单（幂等）；热点商品数据如何缓存与预热。"
+    },
+    {
+      "id": 18,
+      "category": "计算机网络",
+      "title": "TCP 连接管理与 HTTP 演进",
+      "summary": "三次握手四次挥手、TIME_WAIT，以及 HTTP/1.1 到 HTTP/3 的变化。",
+      "core": [
+        "三次握手：SYN → SYN+ACK → ACK，确认双方收发能力；四次挥手：FIN → ACK → FIN → ACK，体现半关闭。",
+        "TIME_WAIT 出现在主动关闭方，持续 2MSL，确保旧报文消失、被动方 FIN 可重传；大量 TIME_WAIT 可开启 tcp_tw_reuse 并调大端口范围。",
+        "TCP 可靠传输：序号 + 确认、超时重传、滑动窗口、拥塞控制（慢启动、拥塞避免、快重传快恢复）。",
+        "HTTP/1.1：keep-alive 长连接，管道化受限，存在队头阻塞；HTTPS = HTTP + TLS 握手与加密。",
+        "HTTP/2：二进制帧、多路复用、头部压缩（HPACK），但仍受 TCP 队头阻塞影响；HTTP/3 基于 QUIC（UDP）彻底解决。"
+      ],
+      "qa": [
+        {
+          "q": "为什么挥手要四次？",
+          "a": "TCP 是全双工，一方发 FIN 只表示自己不再发送，对方可能还有数据要发，所以 ACK 和 FIN 分开，需要两次来回共四个报文。"
+        },
+        {
+          "q": "TCP 粘包怎么处理？",
+          "a": "应用层解决：定长报文、分隔符（如 \n）、长度前缀（4 字节长度字段），或使用 Protobuf/Netty 等自带拆包能力的框架。"
+        }
+      ],
+      "tip": "追问：HTTPS 完整握手流程（TLS 1.2 与 1.3 的区别）；HTTP/2 多路复用的副作用（TCP 队头阻塞）。"
+    }
+  ]
+}

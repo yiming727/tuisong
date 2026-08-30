@@ -40,12 +40,18 @@ def pick_entry(entries: list[dict], day_index: int) -> dict:
     return entries[day_index % len(entries)]
 
 
+def slot_label(now: datetime) -> str:
+    """按北京时间区分晨读（上午）与晚间回顾（下午）。"""
+    return "晨读" if now.hour < 12 else "晚间回顾"
+
+
 def render(entry: dict, now: datetime, day_index: int) -> tuple[str, str]:
-    title = f"后端每日知识 · {entry['category']} · {entry['title']}"
+    slot = slot_label(now)
+    title = f"【{slot}】后端每日知识 · {entry['category']} · {entry['title']}"
     lines = [
         f"# {now.strftime('%m月%d日')} · 每日后端知识",
         "",
-        f"## 🎯 {entry['title']}",
+        f"## 🎯 {entry['title']}（{slot}）",
         "",
         f"> {entry['summary']}",
         "",
@@ -68,7 +74,10 @@ def render(entry: dict, now: datetime, day_index: int) -> tuple[str, str]:
         lines.append(entry["tip"])
         lines.append("")
     lines.append("---")
-    lines.append("每天 10 分钟，坚持就是胜利 💪")
+    if slot == "晨读":
+        lines.append("新的一天，从 10 分钟开始 💪")
+    else:
+        lines.append("晚间回顾，今天也进步了一点 💪")
     return title, "\n".join(lines)
 
 
@@ -162,7 +171,10 @@ def main() -> int:
         title = f"{title}（测试 {stamp}）"
         content = f"{content}\n\n---\n（测试消息 {stamp}，可安全重复发送）"
 
-    print(f"今日选题（内容库共 {len(entries)} 条）：{entry['category']} - {entry['title']}")
+    print(
+        f"{slot_label(now)}选题（内容库共 {len(entries)} 条）："
+        f"{entry['category']} - {entry['title']}"
+    )
 
     if args.preview:
         print(content)

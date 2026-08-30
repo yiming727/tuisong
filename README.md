@@ -1,12 +1,13 @@
 # 每日后端知识邮箱推送
 
-每天早上 07:00（北京时间）自动生成一份「后端面试知识」并推送到你的邮箱。
+每天 06:02 和 18:02（北京时间）各推送一份「后端面试知识」到你的邮箱，
+早晨为「晨读」版、傍晚为「晚间回顾」版。
 纯云端运行，电脑关机也不影响，适合 Java 后端准备跳槽、通勤 10 分钟阅读。
 
 ## 工作原理
 
 ```text
-GitHub Actions（每天 07:00 云端触发）
+GitHub Actions（每天 06:02 / 18:02 云端触发）
         │
         ▼
 Python 脚本按日期从 content/knowledge_bank.json 选题
@@ -22,8 +23,8 @@ Python 脚本按日期从 content/knowledge_bank.json 选题
 
 ```text
 .
-├── .github/workflows/daily-push.yml   # 定时任务：每天 07:00 触发
-├── scripts/daily_push.py              # 选题、生成内容、调用微信推送
+├── .github/workflows/daily-push.yml   # 定时任务：每天 06:02 / 18:02 触发
+├── scripts/daily_push.py              # 选题、生成内容、调用邮箱推送
 ├── content/knowledge_bank.json        # 知识库（目前 18 个主题，可扩充）
 └── README.md
 ```
@@ -66,7 +67,7 @@ Value: 第 1 步复制的 token
 
 ## 时间与频率
 
-- 每天 07:00 北京时间自动运行，无需电脑开机。
+- 每天 06:02（晨读）和 18:02（晚间回顾）北京时间各推送一次，无需电脑开机。
 - 想改时间：编辑 `.github/workflows/daily-push.yml` 里的 cron（UTC 时间，北京时间 = UTC + 8）。
 - 想暂停：在 GitHub Actions 页面把工作流禁用即可。
 

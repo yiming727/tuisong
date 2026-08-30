@@ -2,8 +2,9 @@ name: Daily Backend Knowledge Push
 
 on:
   schedule:
-    # 每天 08:00 北京时间（UTC+8）= 00:00 UTC
-    - cron: "0 0 * * *"
+    # 每天 08:02 北京时间（UTC+8）= 00:02 UTC
+    # 避开整点高峰：GitHub 定时任务在整点前后负载高时会被排队延迟
+    - cron: "2 0 * * *"
   workflow_dispatch:
     inputs:
       test_mode:
